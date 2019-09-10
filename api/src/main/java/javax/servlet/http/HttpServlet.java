@@ -137,8 +137,15 @@ public abstract class HttpServlet extends GenericServlet {
      * @see javax.servlet.ServletResponse#setContentType
      */
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doMethod(req, resp);
+    }
+
+    // resolve method_not_supported message at runtime
+    private void doMethod(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String protocol = req.getProtocol();
-        String msg = lStrings.getString("http.method_get_not_supported");
+        String errMsg = lStrings.getString("http.method_not_supported");
+        String method = req.getMethod();
+        String msg = MessageFormat.format(errMsg, method);
         if (protocol.endsWith("1.1")) {
             resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, msg);
         } else {
@@ -243,13 +250,7 @@ public abstract class HttpServlet extends GenericServlet {
      * @see javax.servlet.ServletResponse#setContentType
      */
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String protocol = req.getProtocol();
-        String msg = lStrings.getString("http.method_post_not_supported");
-        if (protocol.endsWith("1.1")) {
-            resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, msg);
-        } else {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
-        }
+        doMethod(req, resp);
     }
 
     /**
@@ -281,13 +282,7 @@ public abstract class HttpServlet extends GenericServlet {
      * @throws ServletException if the request for the PUT cannot be handled
      */
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String protocol = req.getProtocol();
-        String msg = lStrings.getString("http.method_put_not_supported");
-        if (protocol.endsWith("1.1")) {
-            resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, msg);
-        } else {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
-        }
+        doMethod(req, resp);
     }
 
     /**
@@ -312,13 +307,7 @@ public abstract class HttpServlet extends GenericServlet {
      * @throws ServletException if the request for the DELETE cannot be handled
      */
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String protocol = req.getProtocol();
-        String msg = lStrings.getString("http.method_delete_not_supported");
-        if (protocol.endsWith("1.1")) {
-            resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, msg);
-        } else {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
-        }
+        doMethod(req, resp);
     }
 
     private Method[] getAllDeclaredMethods(Class<? extends HttpServlet> c) {
@@ -367,74 +356,42 @@ public abstract class HttpServlet extends GenericServlet {
     protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         Method[] methods = getAllDeclaredMethods(this.getClass());
 
-        boolean ALLOW_GET = false;
-        boolean ALLOW_HEAD = false;
-        boolean ALLOW_POST = false;
-        boolean ALLOW_PUT = false;
-        boolean ALLOW_DELETE = false;
-        boolean ALLOW_TRACE = true;
-        boolean ALLOW_OPTIONS = true;
-
-        for (int i = 0; i < methods.length; i++) {
-            String methodName = methods[i].getName();
-
-            if (methodName.equals("doGet")) {
-                ALLOW_GET = true;
-                ALLOW_HEAD = true;
-            } else if (methodName.equals("doPost")) {
-                ALLOW_POST = true;
-            } else if (methodName.equals("doPut")) {
-                ALLOW_PUT = true;
-            } else if (methodName.equals("doDelete")) {
-                ALLOW_DELETE = true;
-            }
-
-        }
-
-        // we know "allow" is not null as ALLOW_OPTIONS = true
+        // we know "allow" is not null OPTIONS method are allowed
         // when this method is invoked
         StringBuilder allow = new StringBuilder();
-        if (ALLOW_GET) {
-            allow.append(METHOD_GET);
-        }
-        if (ALLOW_HEAD) {
-            if (allow.length() > 0) {
-                allow.append(", ");
+
+        for (Method value : methods) {
+            String methodName = value.getName();
+
+            switch (methodName) {
+                case "doGet":
+                    appendAllowedMethod(allow, METHOD_GET);
+                    appendAllowedMethod(allow, METHOD_HEAD);
+                    break;
+                case "doPost":
+                    appendAllowedMethod(allow, METHOD_POST);
+                    break;
+                case "doPut":
+                    appendAllowedMethod(allow, METHOD_PUT);
+                    break;
+                case "doDelete":
+                    appendAllowedMethod(allow, METHOD_DELETE);
+                    break;
             }
-            allow.append(METHOD_HEAD);
-        }
-        if (ALLOW_POST) {
-            if (allow.length() > 0) {
-                allow.append(", ");
-            }
-            allow.append(METHOD_POST);
-        }
-        if (ALLOW_PUT) {
-            if (allow.length() > 0) {
-                allow.append(", ");
-            }
-            allow.append(METHOD_PUT);
-        }
-        if (ALLOW_DELETE) {
-            if (allow.length() > 0) {
-                allow.append(", ");
-            }
-            allow.append(METHOD_DELETE);
-        }
-        if (ALLOW_TRACE) {
-            if (allow.length() > 0) {
-                allow.append(", ");
-            }
-            allow.append(METHOD_TRACE);
-        }
-        if (ALLOW_OPTIONS) {
-            if (allow.length() > 0) {
-                allow.append(", ");
-            }
-            allow.append(METHOD_OPTIONS);
         }
 
+        // TRACE method is allowed since it used in debugging
+        appendAllowedMethod(allow, METHOD_TRACE);
+        appendAllowedMethod(allow, METHOD_OPTIONS);
+
         resp.setHeader("Allow", allow.toString());
+    }
+
+    private void appendAllowedMethod(StringBuilder allow, String method) {
+        if (allow.length() > 0) {
+            allow.append(", ");
+        }
+        allow.append(method);
     }
 
     /**
