@@ -17,6 +17,8 @@
 
 package jakarta.servlet;
 
+import jakarta.servlet.http.Cookie.SameSite;
+
 /**
  * Class that may be used to configure various properties of cookies used for session tracking purposes.
  *
@@ -231,4 +233,44 @@ public interface SessionCookieConfig {
      * @see jakarta.servlet.http.Cookie#getMaxAge
      */
     public int getMaxAge();
+
+    /**
+     * Sets the SameSite attribute for the session tracking cookies created on behalf of the application represented
+     * by the <tt>ServletContext</tt> from which this <tt>SessionCookieConfig</tt> was acquired.
+     * When <code>sameSite</code> is not <code>null</code>, this cookie will have its <code>SameSite</code>
+     * attribute set with the provided value. When <code>sameSite</code> is <code>null</code>, the container may
+     * use a context specific default for the cookie's <code>SameSite</code> attribute or it may not be set.
+     *
+     * @param sameSite the <i>SameSite</i> attribute of the session tracking cookies created on behalf of the
+     *                 application represented by the <tt>ServletContext</tt> from which this
+     *                 <tt>SessionCookieConfig</tt> was acquired. May be null to imply that the SameSite attribute
+     *                 should be set to a context specific default value, or should not be set if there is no context
+     *                 default.
+     *
+     * @throws IllegalStateException if the <tt>ServletContext</tt> from which this <tt>SessionCookieConfig</tt> was
+     *                               acquired has already been initialized
+     *
+     * @see jakarta.servlet.http.Cookie#setSameSite(SameSite)
+     *
+     * @since Servlet 5.0
+     */
+    void setSameSite(SameSite sameSite);
+
+    /**
+     * Gets the SameSite attribute of the session tracking cookies created on behalf of the application represented
+     * by the <tt>ServletContext</tt> from which this <tt>SessionCookieConfig</tt> was acquired.
+     *
+     * <p>
+     * By default, null is returned implying that the SameSite attribute should be set to a context specific default
+     * value, or should not be set if there is no context default.
+     *
+     * @return the SameSite attribute of the session tracking cookies created on behalf of the application represented
+     *         by the <tt>ServletContext</tt> from which this <tt>SessionCookieConfig</tt> was acquired. May be null if
+     *         the attribute should be a container provided context default or not set if there is no context default.
+     *
+     * @see jakarta.servlet.http.Cookie#getSameSite
+     *
+     * @since Servlet 5.0
+     */
+    SameSite getSameSite();
 }
