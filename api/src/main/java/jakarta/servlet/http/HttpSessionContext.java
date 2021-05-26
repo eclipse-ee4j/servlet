@@ -2,6 +2,7 @@
  * Copyright (c) 1997, 2020 Oracle and/or its affiliates and others.
  * All rights reserved.
  * Copyright 2004 The Apache Software Foundation
+ * Copyright (c) 2020 Payara Services Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +19,7 @@
 
 package jakarta.servlet.http;
 
+import java.util.Collections;
 import java.util.Enumeration;
 
 /**
@@ -44,16 +46,20 @@ public interface HttpSessionContext {
      * @return null in all cases
      */
     @Deprecated
-    public HttpSession getSession(String sessionId);
+    default public HttpSession getSession(String sessionId) {
+        return null;
+    }
 
     /**
      *
      * @deprecated As of Java Servlet API 2.1 with no replacement. This method must return an empty <code>Enumeration</code>
      * and will be removed in a future version of this API.
      *
-     * @return null
+     * @return an empty {@link Enumeration}
      *
      */
     @Deprecated
-    public Enumeration<String> getIds();
+    default public Enumeration<String> getIds() {
+        return Collections.emptyEnumeration();
+    }
 }
